@@ -20,12 +20,6 @@
 # production
 /build
 
-# env vairables
-*.env
-*.local
-*.env.development
-*.env.production
-
 # misc
 .DS_Store
 *.pem
