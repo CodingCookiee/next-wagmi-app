@@ -8,69 +8,41 @@ import {
   Button,
   PageTransitionOverlay,
 } from "../../components/ui/common";
-import { SIWEButton, useSIWE } from "connectkit";
+import { useSession } from "next-auth/react";
 import WalletConnector from "../../components/ui/client/WalletConnector";
 
 const SignIn = () => {
   const router = useRouter();
-  const { isSignedIn, isConnected, loading: siweLoading } = useSIWE();
+  const { data: session, status } = useSession();
   const [redirecting, setRedirecting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Initial loading check
   useEffect(() => {
-    // Once SIWE loading is complete, we can turn off our loading state
-    if (!siweLoading) {
+    if (status !== "loading") {
       setLoading(false);
     }
-  }, [siweLoading]);
+  }, [status]);
+
+  // Handle successful authentication
+  useEffect(() => {
+    if (session && !redirecting) {
+      console.log("User is authenticated, redirecting to dashboard");
+      setRedirecting(true);
+
+      // Small delay to ensure a smooth transition
+      const redirectTimer = setTimeout(() => {
+        router.push("/dashboard");
+      }, 1500);
+
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [session, router, redirecting]);
 
   // Handle Google Sign In
   const handleGoogleSignIn = async () => {
-    // setRedirecting(true);
-    // // Implement Google Sign In logic here
-    // try {
-    //   // Mock authentication delay
-    //   await new Promise(resolve => setTimeout(resolve, 1000));
-    //   // After successful sign in, redirect to dashboard
-    //   router.push("/dashboard");
-    // } catch (error) {
-    //   console.error("Google sign in failed:", error);
-    //   setRedirecting(false);
-    // }
+    // Implementation for Google Sign In would go here
   };
-
-  // Handle successful SIWE authentication from page-level check
-  // useEffect(() => {
-  //   if (isSignedIn && isConnected && !redirecting) {
-  //     console.log(
-  //       "SignIn page: User is authenticated with SIWE and wallet is connected, redirecting to dashboard"
-  //     );
-  //     setRedirecting(true);
-
-  //     // Small delay to ensure a smooth transition
-  //     const redirectTimer = setTimeout(() => {
-  //       router.push("/dashboard");
-  //     }, 1500); // Increased delay to make the overlay more visible
-
-  //     return () => clearTimeout(redirectTimer);
-  //   }
-  // }, [isSignedIn, isConnected, router, redirecting]);
-
-  // Called when WalletConnector signals successful authentication
-  // const handleSuccessfulAuth = () => {
-  //   console.log("SignIn page: Received successful auth notification from wallet connector");
-
-  //   // Only initiate redirect if we're not already redirecting
-  //   if (!redirecting) {
-  //     setRedirecting(true);
-
-  //     // Small delay to ensure transition is visible
-  //     setTimeout(() => {
-  //       router.push("/dashboard");
-  //     }, 1500);
-  //   }
-  // };
 
   return (
     <>
@@ -98,7 +70,12 @@ const SignIn = () => {
               alt="NFT Nexus Logo"
               className="mx-auto h-16 w-16 mb-4"
             />
-            <Text variant="h2" color="primary" align="center" className="bg-gradient-to-r from-[#4B0082] to-[#AAA9CF] bg-clip-text text-transparent">
+            <Text
+              variant="h2"
+              color="primary"
+              align="center"
+              className="bg-gradient-to-r from-[#4B0082] to-[#AAA9CF] bg-clip-text text-transparent"
+            >
               Welcome to NFT Nexus
             </Text>
             <Text
@@ -122,14 +99,8 @@ const SignIn = () => {
                 Connect with Wallet
               </Text>
               <div className="self-center mx-auto">
-                <WalletConnector
-                  compact={true}
-                  // onSuccessfulAuth={handleSuccessfulAuth}
-                  // redirectPath="/dashboard"
-                />
+                <WalletConnector compact={true} />
               </div>
-
-              
             </div>
 
             <div className="relative">
