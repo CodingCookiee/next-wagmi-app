@@ -8,7 +8,7 @@ import { SiweMessage } from 'siwe';
 export function useSiweAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
 
@@ -17,12 +17,19 @@ export function useSiweAuth() {
       setIsLoading(true);
       setError(null);
 
-      if (!address) {
-        throw new Error('No wallet address found');
+      // Check if wallet is properly connected
+      if (!address || !isConnected) {
+        throw new Error('Wallet not connected');
       }
+
+      // Add a small delay to ensure wallet is fully ready
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Get CSRF token
       const csrfRes = await fetch('/api/auth/csrf');
+      if (!csrfRes.ok) {
+        throw new Error('Failed to get CSRF token');
+      }
       const { csrfToken } = await csrfRes.json();
 
       // Create SIWE message
@@ -38,10 +45,21 @@ export function useSiweAuth() {
 
       // console.log('Created SIWE message:', message);
 
-      // Sign the message
-      const signature = await signMessageAsync({
-        message: message.prepareMessage(),
-      });
+      // Sign the message with better error handling
+      let signature;
+      try {
+        signature = await signMessageAsync({
+          message: message.prepareMessage(),
+        });
+      } catch (signError) {
+        console.error('Message signing failed:', signError);
+        if (signError.message.includes('User rejected') || signError.message.includes('denied')) {
+          throw new Error('Message signing was rejected by user');
+        } else if (signError.message.includes('unauthorized') || signError.message.includes('not authorized')) {
+          throw new Error('Wallet not authorized. Please try reconnecting your wallet.');
+        }
+        throw new Error('Failed to sign message. Please try again.');
+      }
 
       // console.log('Message signed successfully');
 
@@ -66,11 +84,16 @@ export function useSiweAuth() {
     } finally {
       setIsLoading(false);
     }
-  }, [address, chainId, signMessageAsync]);
+  }, [address, chainId, signMessageAsync, isConnected]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   return {
     signInWithEthereum,
     isLoading,
     error,
+    clearError,
   };
 }

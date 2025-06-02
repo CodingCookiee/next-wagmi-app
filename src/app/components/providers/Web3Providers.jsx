@@ -33,7 +33,7 @@ export function Web3Providers({ children }) {
           <RainbowKitProvider
             modalSize="compact"
             initialChain={defaultChain}
-            showRecentTransactions={true}
+            // showRecentTransactions={true}
           >
             {children}
           </RainbowKitProvider>

@@ -104,7 +104,7 @@ const SignIn = () => {
             </div>
 
             {/* Show authentication status */}
-            {isConnected && (
+            {/* {isConnected && (
               <div className="text-center">
                 {status === "authenticated" ? (
                   <div className="space-y-2">
@@ -118,7 +118,7 @@ const SignIn = () => {
                   </Text>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* Instructions */}
             {!isConnected && (
