@@ -87,7 +87,6 @@ export default function WalletConnector({ compact = false, className }) {
       sessionStatus !== "loading" &&
       !siweLoading &&
       !authAttempted;
-    //  hasRecentlyDisconnected;
 
     if (shouldAuthenticate) {
       // console.log("Starting SIWE authentication...");
@@ -159,9 +158,9 @@ export default function WalletConnector({ compact = false, className }) {
       sessionStorage.clear();
     }, 500);
 
-    // setTimeout(() => {
-    //   window.location.reload();
-    // }, 500);
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   }, [disconnect, clearError]);
 
   // Determine if user is fully authenticated
