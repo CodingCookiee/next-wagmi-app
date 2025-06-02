@@ -7,20 +7,22 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { config, defaultChain } from "../../utils/config.js";
 import { SessionProvider } from "next-auth/react";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 0,
-      onError: (error) => {
-        console.error("Mutation error:", error);
-      }
-    }
-  },
-});
+// const queryClient = new QueryClient({
+//   defaultOptions: {
+//     queries: {
+//       retry: 1,
+//       refetchOnWindowFocus: false,
+//     },
+//     mutations: {
+//       retry: 0,
+//       onError: (error) => {
+//         console.error("Mutation error:", error);
+//       }
+//     }
+//   },
+// });
+
+const queryClient = new QueryClient();
 
 export function Web3Providers({ children }) {
   return (

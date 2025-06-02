@@ -37,14 +37,17 @@ export default function WalletConnector({ compact = false, className }) {
   const [redirecting, setIsRedirecting] = useState(false);
   const [authAttempted, setAuthAttempted] = useState(false);
   const [mounted, setMounted] = useState(false);
-  
+
   const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { disconnect } = useDisconnect();
   const { data: session, status: sessionStatus } = useSession();
-  const { signInWithEthereum, isLoading: siweLoading, error: siweError, clearError } = useSiweAuth();
+  const {
+    signInWithEthereum,
+    isLoading: siweLoading,
+    error: siweError,
+    clearError,
+  } = useSiweAuth();
   const router = useRouter();
-
-  //? const hasRecentlyDisconnected = localStorage.getItem("recentlyDisconnected");
 
   // Handle mounting
   useEffect(() => {
@@ -53,60 +56,73 @@ export default function WalletConnector({ compact = false, className }) {
 
   // Reset auth state when wallet disconnects
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected && session) {
+      signOut({ redirect: false });
       setAuthAttempted(false);
       clearError();
     }
-  }, [isConnected, clearError]);
+  }, [isConnected, clearError, session]);
 
   // Debug logging
   // useEffect(() => {
-  //   console.log("Wallet state:", { 
-  //     isConnected, 
-  //     isConnecting, 
-  //     isReconnecting, 
-  //     address, 
+  //   console.log("Wallet state:", {
+  //     isConnected,
+  //     isConnecting,
+  //     isReconnecting,
+  //     address,
   //     sessionStatus,
-  //     authAttempted 
+  //     authAttempted
   //   });
   // }, [isConnected, isConnecting, isReconnecting, address, sessionStatus, authAttempted]);
 
   // Handle SIWE authentication when wallet connects
   useEffect(() => {
-    const shouldAuthenticate = 
+    const shouldAuthenticate =
       mounted &&
-      isConnected && 
-      address && 
+      isConnected &&
+      address &&
       !isConnecting &&
       !isReconnecting &&
-      sessionStatus !== "authenticated" && 
+      sessionStatus !== "authenticated" &&
       sessionStatus !== "loading" &&
       !siweLoading &&
       !authAttempted;
-      //  hasRecentlyDisconnected;
+    //  hasRecentlyDisconnected;
 
     if (shouldAuthenticate) {
       // console.log("Starting SIWE authentication...");
       handleSiweAuth();
     }
-  }, [mounted, isConnected, address, isConnecting, isReconnecting, sessionStatus, siweLoading, authAttempted]);
+  }, [
+    mounted,
+    isConnected,
+    address,
+    isConnecting,
+    isReconnecting,
+    sessionStatus,
+    siweLoading,
+    authAttempted,
+  ]);
 
   const handleSiweAuth = useCallback(async () => {
     if (authAttempted) return;
-    
+
     try {
       setAuthAttempted(true);
       clearError();
-      
+
       // Wait a bit longer for wallet to be fully ready
       // await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       await signInWithEthereum();
       // console.log("SIWE authentication successful");
     } catch (error) {
       console.error("SIWE authentication failed:", error);
       // Reset auth attempted on certain errors so user can retry
-      if (error.message.includes('not authorized') || error.message.includes('rejected')) {
+      if (
+        error.message.includes("not authorized") ||
+        error.message.includes("rejected")
+      ) {
         setTimeout(() => setAuthAttempted(false), 2000);
       }
     }
@@ -132,22 +148,18 @@ export default function WalletConnector({ compact = false, className }) {
     }
   };
 
-  const handleDisconnect = useCallback(async() => {
-  //?  localStorage.setItem('recently_disconnected', 'true');
+  const handleDisconnect = useCallback(async () => {
 
     setAuthAttempted(false);
     clearError();
-    await disconnect();
     await signOut({ redirect: false });
-  
-    localStorage.clear();
-    sessionStorage.clear();
+    await disconnect();
+    setTimeout(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    }, 500);
 
-    //? setTimeout(() => {
-    //   localStorage.removeItem('recently_disconnected');
-    // }, 3000);
-
-    //?   setTimeout(() => {
+    // setTimeout(() => {
     //   window.location.reload();
     // }, 500);
   }, [disconnect, clearError]);
@@ -172,7 +184,7 @@ export default function WalletConnector({ compact = false, className }) {
         status="loading"
         bgColor="bg-indigo-100/90 dark:bg-indigo-900/90"
       />
-      
+
       <div
         className={
           compact
@@ -180,7 +192,7 @@ export default function WalletConnector({ compact = false, className }) {
             : "w-full min-h-screen flex flex-col items-center justify-center p-10 gap-10"
         }
       >
-        {(isConnecting || isReconnecting || siweLoading) ? (
+        {isConnecting || isReconnecting || siweLoading ? (
           <div className="flex items-center justify-between gap-4">
             <Loader width="w-5" height="h-5" />
             <Text
@@ -189,7 +201,9 @@ export default function WalletConnector({ compact = false, className }) {
               weight="normal"
               className="uppercase text-xs"
             >
-              {isConnecting || isReconnecting ? "Connecting..." : "Authenticating..."}
+              {isConnecting || isReconnecting
+                ? "Connecting..."
+                : "Authenticating..."}
             </Text>
           </div>
         ) : (
@@ -234,7 +248,10 @@ export default function WalletConnector({ compact = false, className }) {
                                 clearError();
                                 openConnectModal();
                               } catch (error) {
-                                console.error("Error opening connect modal:", error);
+                                console.error(
+                                  "Error opening connect modal:",
+                                  error
+                                );
                               }
                             }}
                             type="button"
@@ -253,7 +270,10 @@ export default function WalletConnector({ compact = false, className }) {
                               try {
                                 openChainModal();
                               } catch (error) {
-                                console.error("Error opening chain modal:", error);
+                                console.error(
+                                  "Error opening chain modal:",
+                                  error
+                                );
                               }
                             }}
                             type="button"
@@ -271,7 +291,9 @@ export default function WalletConnector({ compact = false, className }) {
                             {siweLoading ? (
                               <div className="flex items-center justify-center text-yellow-500">
                                 <Loader width="w-4" height="h-4" />
-                                <span className="text-sm ml-2">Signing message...</span>
+                                <span className="text-sm ml-2">
+                                  Signing message...
+                                </span>
                               </div>
                             ) : isFullyAuthenticated ? (
                               <Text
@@ -286,7 +308,8 @@ export default function WalletConnector({ compact = false, className }) {
                                   align="center"
                                   className="text-orange-500"
                                 >
-                                  ✓ Wallet Connected - Please sign the message to authenticate
+                                  ✓ Wallet Connected - Please sign the message
+                                  to authenticate
                                 </Text>
                                 {/* {!siweLoading && (
                                   <Button
@@ -323,7 +346,10 @@ export default function WalletConnector({ compact = false, className }) {
                                 try {
                                   openChainModal();
                                 } catch (error) {
-                                  console.error("Error opening chain modal:", error);
+                                  console.error(
+                                    "Error opening chain modal:",
+                                    error
+                                  );
                                 }
                               }}
                               type="button"
@@ -348,7 +374,10 @@ export default function WalletConnector({ compact = false, className }) {
                                 try {
                                   openAccountModal();
                                 } catch (error) {
-                                  console.error("Error opening account modal:", error);
+                                  console.error(
+                                    "Error opening account modal:",
+                                    error
+                                  );
                                 }
                               }}
                               type="button"
@@ -361,7 +390,10 @@ export default function WalletConnector({ compact = false, className }) {
 
                             {/* Dashboard button - only if fully authenticated */}
                             {isFullyAuthenticated && (
-                              <Link href="/dashboard" onClick={handleDashboardClick}>
+                              <Link
+                                href="/dashboard"
+                                onClick={handleDashboardClick}
+                              >
                                 <Button
                                   variant="default"
                                   className="w-full bg-gradient-to-r from-purple-700 to-indigo-600 text-white hover:text-white"
