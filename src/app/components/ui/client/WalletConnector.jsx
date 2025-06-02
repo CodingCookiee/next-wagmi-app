@@ -44,6 +44,8 @@ export default function WalletConnector({ compact = false, className }) {
   const { signInWithEthereum, isLoading: siweLoading, error: siweError, clearError } = useSiweAuth();
   const router = useRouter();
 
+  //? const hasRecentlyDisconnected = localStorage.getItem("recentlyDisconnected");
+
   // Handle mounting
   useEffect(() => {
     setMounted(true);
@@ -81,6 +83,7 @@ export default function WalletConnector({ compact = false, className }) {
       sessionStatus !== "loading" &&
       !siweLoading &&
       !authAttempted;
+      //  hasRecentlyDisconnected;
 
     if (shouldAuthenticate) {
       // console.log("Starting SIWE authentication...");
@@ -129,11 +132,24 @@ export default function WalletConnector({ compact = false, className }) {
     }
   };
 
-  const handleDisconnect = useCallback(() => {
+  const handleDisconnect = useCallback(async() => {
+  //?  localStorage.setItem('recently_disconnected', 'true');
+
     setAuthAttempted(false);
     clearError();
-    disconnect();
-    signOut({ redirect: false });
+    await disconnect();
+    await signOut({ redirect: false });
+  
+    localStorage.clear();
+    sessionStorage.clear();
+
+    //? setTimeout(() => {
+    //   localStorage.removeItem('recently_disconnected');
+    // }, 3000);
+
+    //?   setTimeout(() => {
+    //   window.location.reload();
+    // }, 500);
   }, [disconnect, clearError]);
 
   // Determine if user is fully authenticated

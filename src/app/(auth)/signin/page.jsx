@@ -130,7 +130,7 @@ const SignIn = () => {
             )}
 
             {/* Authentication steps indicator */}
-            <div className=" space-y-1">
+            <div className="  w-full flex items-center justify-center gap-3">
               <div className="flex items-center justify-center space-x-2">
                 <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                 <Text variant="small" color={isConnected ? "success" : "secondary"}>
