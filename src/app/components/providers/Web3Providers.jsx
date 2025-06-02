@@ -4,35 +4,39 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { config } from "../../utils/config.js";
-import { RainbowKitSiweNextAuthProvider } from "@rainbow-me/rainbowkit-siwe-next-auth";
+import { config, defaultChain } from "../../utils/config.js";
 import { SessionProvider } from "next-auth/react";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
     },
+    mutations: {
+      retry: 0,
+      onError: (error) => {
+        console.error("Mutation error:", error);
+      }
+    }
   },
-});
-
-// Function to get SIWE message options
-const getSiweMessageOptions = () => ({
-  statement: "Sign in to NFT Nexus",
 });
 
 export function Web3Providers({ children }) {
   return (
     <WagmiProvider config={config}>
-      <SessionProvider refetchInterval={0}>
+      <SessionProvider 
+        refetchInterval={0}
+        refetchOnWindowFocus={false}
+      >
         <QueryClientProvider client={queryClient}>
-          <RainbowKitSiweNextAuthProvider
-            getSiweMessageOptions={getSiweMessageOptions}
+          <RainbowKitProvider
+            modalSize="compact"
+            initialChain={defaultChain}
+            showRecentTransactions={true}
           >
-            <RainbowKitProvider>{children}</RainbowKitProvider>
-          </RainbowKitSiweNextAuthProvider>
+            {children}
+          </RainbowKitProvider>
         </QueryClientProvider>
       </SessionProvider>
     </WagmiProvider>

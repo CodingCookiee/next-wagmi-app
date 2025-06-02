@@ -1,59 +1,59 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FcGoogle } from "react-icons/fc";
 import { useRouter } from "next/navigation";
-import {
-  Text,
-  Button,
-  PageTransitionOverlay,
-} from "../../components/ui/common";
+import { Text, PageTransitionOverlay } from "../../components/ui/common";
 import { useSession } from "next-auth/react";
+import { useAccount } from "wagmi";
 import WalletConnector from "../../components/ui/client/WalletConnector";
 
 const SignIn = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { address, isConnected } = useAccount();
   const [redirecting, setRedirecting] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // Initial loading check
+  // Debug logging
+  // useEffect(() => {
+  //   console.log("SignIn page - Session status:", status);
+  //   console.log("SignIn page - Session data:", session);
+  //   console.log("SignIn page - Wallet status:", { isConnected, address });
+  // }, [session, status, isConnected, address]);
+
+  // Only redirect when FULLY authenticated (both wallet connected AND session exists)
   useEffect(() => {
-    if (status !== "loading") {
-      setLoading(false);
+    const isFullyAuthenticated =
+      status === "authenticated" &&
+      session?.user?.address &&
+      isConnected &&
+      address &&
+      address.toLowerCase() === session.user.address.toLowerCase();
+
+    if (isFullyAuthenticated && !redirecting) {
+      // console.log("User is fully authenticated, redirecting to dashboard");
+      // setRedirecting(true);
+      
+      // Delay to ensure smooth transition
+      // setTimeout(() => {
+      //   router.push("/dashboard");
+      // }, 1500);
     }
-  }, [status]);
+  }, [session, status, isConnected, address, router, redirecting]);
 
-  // Handle successful authentication
-  useEffect(() => {
-    if (session && !redirecting) {
-      console.log("User is authenticated, redirecting to dashboard");
-      setRedirecting(true);
-
-      // Small delay to ensure a smooth transition
-      const redirectTimer = setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-
-      return () => clearTimeout(redirectTimer);
-    }
-  }, [session, router, redirecting]);
-
-  // Handle Google Sign In
-  const handleGoogleSignIn = async () => {
-    // Implementation for Google Sign In would go here
-  };
-
-  return (
-    <>
-      {/* Page loading overlay */}
+  // Show loading overlay while session is loading
+  if (status === "loading") {
+    return (
       <PageTransitionOverlay
-        show={loading}
+        show={true}
         message="Loading authentication state..."
         status="loading"
         bgColor="bg-indigo-50/80 dark:bg-indigo-950/80"
       />
+    );
+  }
 
+  return (
+    <>
       {/* Redirect overlay */}
       <PageTransitionOverlay
         show={redirecting}
@@ -84,7 +84,7 @@ const SignIn = () => {
               align="center"
               className="mt-2"
             >
-              Sign in to access your NFT dashboard
+              Connect your wallet and sign a message to authenticate
             </Text>
           </div>
 
@@ -103,26 +103,53 @@ const SignIn = () => {
               </div>
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            {/* Show authentication status */}
+            {isConnected && (
+              <div className="text-center">
+                {status === "authenticated" ? (
+                  <div className="space-y-2">
+                    <Text variant="small" color="success" align="center">
+                      ✓ Wallet connected and authenticated
+                    </Text>
+                  </div>
+                ) : (
+                  <Text variant="small" color="secondary" align="center">
+                    Wallet connected - Please sign the message to authenticate
+                  </Text>
+                )}
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-                  Or continue with
-                </span>
+            )}
+
+            {/* Instructions */}
+            {!isConnected && (
+              <div className="text-center">
+                <Text variant="small" color="secondary" align="center">
+                  Click "Connect Wallet" above to get started
+                </Text>
+              </div>
+            )}
+
+            {/* Authentication steps indicator */}
+            <div className=" space-y-1">
+              <div className="flex items-center justify-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <Text variant="small" color={isConnected ? "success" : "secondary"}>
+                  Connect Wallet
+                </Text>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${status === "authenticated" ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <Text variant="small" color={status === "authenticated" ? "success" : "secondary"}>
+                  Sign Message
+                </Text>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${status === "authenticated" ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <Text variant="small" color={status === "authenticated" ? "success" : "secondary"}>
+                  Access Dashboard
+                </Text>
               </div>
             </div>
-
-            <Button
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleGoogleSignIn}
-              disabled={redirecting}
-            >
-              <FcGoogle className="h-5 w-5" />
-              Sign in with Google
-            </Button>
           </div>
         </div>
       </div>
